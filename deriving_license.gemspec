@@ -7,6 +7,7 @@ Gem::Specification.new do |s|
   s.email       = 'tom@jugglethis.net'
   s.homepage    = 'http://www.github.com/Schwolop/deriving_license'
   s.executables << 'deriving_license'
+  s.license     = 'beerware'
   
   s.require_paths = ["lib"]
   s.files         = `git ls-files`.split($\)
