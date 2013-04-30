@@ -1,4 +1,5 @@
 require "gemnasium/parser"
+require "bundler"
 
 class DerivingLicense
   def self.run(path=nil)
@@ -21,12 +22,13 @@ class DerivingLicense
     licenses = Hash.new(0)
     gemfile.dependencies.each do |d|
       # See if it's installed locally, and if not add -r to call
-      remote = /#{d.name}/.match( `gem list #{d.name}` ) ? "" : "-r "
-      
-      print "Determining license for #{d.name}#{remote.empty? ? "" : " (remote call required)"}..."; STDOUT.flush
-      spec = eval `gem specification #{remote}#{d.name} --ruby`
+      Bundler.with_clean_env do # This gets out of the bundler context.
+        remote = /#{d.name}/.match( `BUNDLE_GEMFILE=#{path}; gem list #{d.name}` ) ? "" : "-r "      
+        print "Determining license for #{d.name}#{remote.empty? ? "" : " (remote call required)"}..."; STDOUT.flush
+        @spec = eval `gem specification #{remote}#{d.name} --ruby`
+      end
       print "DONE\n"; STDOUT.flush
-      spec.licenses.each{ |l| licenses[l]+=1 }
+      @spec.licenses.each{ |l| licenses[l]+=1 }
     end
     licenses
   end
