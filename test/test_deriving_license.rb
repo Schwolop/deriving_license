@@ -30,7 +30,7 @@ class DerivingLicenseTest < Test::Unit::TestCase
     assert_nothing_raised do
       DerivingLicense.run("Gemfile")
     end
-    assert_equal( {"MIT"=>2}, DerivingLicense.run("Gemfile") )
+    assert_equal( {"MIT"=>1}, DerivingLicense.run("Gemfile") )
   end
 
 end
