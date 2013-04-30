@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deriving_license (0.1.1)
+    deriving_license (0.1.2)
       gemnasium-parser
 
 GEM
