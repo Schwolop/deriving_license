@@ -1,0 +1,18 @@
+PATH
+  remote: .
+  specs:
+    deriving_license (0.1.0)
+      gemnasium-parser
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    gemnasium-parser (0.1.9)
+    rake (10.0.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  deriving_license!
+  rake (>= 0.8.7)

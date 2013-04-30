@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+require 'deriving_license'
+puts DerivingLicense.run(ARGV[0])
