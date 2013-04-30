@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    deriving_license (0.1.3)
+    deriving_license (0.1.4)
       gemnasium-parser
       safe_yaml
 
@@ -18,4 +18,3 @@ PLATFORMS
 DEPENDENCIES
   deriving_license!
   rake (>= 0.8.7)
-  safe_yaml
