@@ -18,6 +18,14 @@ class DerivingLicense
     
     gemfile = Gemnasium::Parser::Gemfile.new(content)
     
-    gemfile.dependencies.each{|d| puts d.name}
+    licenses = Hash.new(0)
+    gemfile.dependencies.each do |d|
+      # See if it's installed locally, and if not add -r to call
+      remote = /#{d.name}/.match( `gem list #{d.name}` ) ? "" : "-r "
+
+      spec = eval `gem specification #{remote}#{d.name} --ruby`
+      spec.licenses.each{ |l| licenses[l]+=1 }
+    end
+    licenses
   end
 end

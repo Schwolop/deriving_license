@@ -26,10 +26,11 @@ class DerivingLicenseTest < Test::Unit::TestCase
     end
   end
   
-  def test_run_takes_one_arg
+  def test_run_with_valid_arg
     assert_nothing_raised do
       DerivingLicense.run("Gemfile")
     end
+    assert_equal( {"MIT"=>1}, DerivingLicense.run("Gemfile") )
   end
 
 end
