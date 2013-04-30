@@ -1,5 +1,6 @@
 require "gemnasium/parser"
 require "bundler"
+require "safe_yaml"
 
 class DerivingLicense
   
@@ -43,10 +44,11 @@ class DerivingLicense
       Bundler.with_clean_env do # This gets out of the bundler context.
         remote = /#{d.name}/.match( `BUNDLE_GEMFILE=#{path}; gem list #{d.name}` ) ? "" : "-r "      
         print "Determining license for #{d.name}#{remote.empty? ? "" : " (remote call required)"}..."
-        @spec = eval `gem specification #{remote}#{d.name} --ruby`
+        yaml = `gem specification #{remote}#{d.name} --yaml`
+        @spec = YAML.load(yaml, :safe => true)
       end
-      print "#{@spec.licenses.empty? ? "UNKNOWN" : "SUCCESS"}\n"
-      @spec.licenses.each{ |l| licenses[l]+=1 }
+      print "#{@spec["licenses"].empty? ? "UNKNOWN" : "SUCCESS"}\n"
+      @spec["licenses"].each{ |l| licenses[l]+=1 }
     end
     licenses
   end
