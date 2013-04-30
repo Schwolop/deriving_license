@@ -12,5 +12,6 @@ Gem::Specification.new do |s|
   s.files         = `git ls-files`.split($\)
   s.test_files    = s.files.grep(/^test\//)
   
-  s.add_dependency "gemnasium-parser"
+  s.add_runtime_dependency "gemnasium-parser"
+  s.add_runtime_dependency "safe_yaml"
 end
