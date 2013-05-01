@@ -5,7 +5,7 @@ Finds the license agreements for all gems in your Gemfile. This is achieved by r
 
 Strategies:
 * from\_gem\_specification
-* from\_license\_file (not yet implemented)
+* from\_license\_file
 * from\_scraping\_homepage
 * from\_parsing\_readme (not yet implemented)
 

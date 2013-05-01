@@ -2,6 +2,7 @@ require "gemnasium/parser"
 require "bundler"
 require "safe_yaml"
 require "curb"
+require "find"
 
 class DerivingLicense
   
@@ -15,7 +16,8 @@ class DerivingLicense
     "MIT" => {name:"Expat License",link:"http://directory.fsf.org/wiki/License:Expat",tags:[:gpl_compatible, :has_restrictions]},
     "BSD" => {name:"FreeBSD Copyright",link:"http://www.freebsd.org/copyright/freebsd-license.html",tags:[:gpl_compatible, :copyleft_compatible, :has_restrictions]},
     "beerware" => {name:"Beerware License",link:"http://en.wikipedia.org/wiki/Beerware#License",tags:[]},
-    "Ruby" => {name:"Ruby License",link:"http://www.ruby-lang.org/en/about/license.txt",tags:[:gpl_compatible, :has_restrictions]}
+    "Ruby" => {name:"Ruby License",link:"http://www.ruby-lang.org/en/about/license.txt",tags:[:gpl_compatible, :has_restrictions]},
+    "Apache" => {name:"Apache License",link:"http://www.apache.org/licenses/LICENSE-2.0",tags:[:has_restrictions]},
   }
 
   @@license_aliases = {
@@ -31,7 +33,8 @@ class DerivingLicense
   # order of fastest to slowest.
   @@strategies = [
     "from_gem_specification",
-    "from_scraping_homepage"
+    "from_scraping_homepage",
+    "from_license_file"
   ]
   
   @@specs_cache = {} # Cache of gem specifications previously fetched.
@@ -121,7 +124,52 @@ class DerivingLicense
   end
   
   def self.from_license_file(dep)
-    []
+    licenses = []
+    Bundler.with_clean_env do # This gets out of the bundler context.
+      @fetch_output = `gem fetch #{dep}`
+      @unpack_output = `gem unpack #{dep} --target=./deriving_license_tmp`
+    end
+    unpack_dir = /'([\/a-zA-Z0-9._\-]*)'/.match(@unpack_output)[1]
+    gem_filename = "#{unpack_dir.split("\/").last}.gem"
+    license_file_paths = []
+    Find.find(unpack_dir) do |path|
+      license_file_paths << path if path =~ /(license|LICENSE)$/
+    end
+    return [] unless license_file_paths
+    
+    # Found filename with the word "license", so now look for known license 
+    # names in the rest of this filename.
+    license_file_paths.each do |p|
+      (@@license_details.keys + @@license_aliases.keys).each do |n|
+        if /#{n}/.match(p)
+          licenses << n
+        end
+      end
+    end
+    
+    if licenses.empty?
+      # Failing that, open each file and check the content in a similar manner.
+      license_file_paths.each do |p|
+        if File.exist?(p)
+          File.open(p).each_line do |l|
+            if /license/.match(l)
+              # Found the word "license", so now look for known license names.
+              (@@license_details.keys + @@license_aliases.keys).each do |n|
+                if /#{n}/.match(l)
+                  licenses << n
+                  return licenses
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+    
+    `rm -rf ./deriving_license_tmp` # Clean up tmp dir. Don't fuck this up.
+    `rm #{gem_filename}` # Remove fetched gem.
+    return licenses
+
   end
   
   def self.from_scraping_homepage(dep)
