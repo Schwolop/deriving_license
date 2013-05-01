@@ -53,14 +53,18 @@ class DerivingLicense
     
     # For each dependency specified...
     gemfile.dependencies.each do |d|
-      print "Determining license for #{d.name}..."
+      print "Determining license for #{d.name}:\n"
       # Try each license finding strategy...
       @@strategies.each do |s|
+        print "\tTrying #{s} strategy..."
         @licenses = eval("#{s}(\"#{d.name}\")")
-        break if @licenses # and break out of the search if successful
+        unless @licenses.empty? # and break out of the search if successful
+          print "SUCCESS\n"
+          break
+        end
+        print "FAILED\n"
       end
       @licenses.each{ |l| detected_licenses[l]+=1 } # add each detected license to the results
-      print "DONE\n"
     end
     detected_licenses
   end
