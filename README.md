@@ -11,7 +11,7 @@ Strategies:
 
 Example output:
 
-    $ deriving_license ../bc/A-A/Gemfile
+    $ deriving_license ~/Code/rails_sample_app/Gemfile
     Determining license for rails:
     	Trying from_gem_specification strategy...FAILED
     	Trying from_scraping_homepage strategy...SUCCESS
