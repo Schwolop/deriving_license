@@ -22,77 +22,8 @@ Example output:
 	Determining license for app_constants:
 		Trying from_gem_specification strategy...FAILED
 		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for bcrypt-ruby:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...FAILED
-		Trying from_license_file strategy...FAILED
-	Determining license for bootstrap-sass:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...FAILED
-		Trying from_license_file strategy...FAILED
-	Determining license for jquery-rails:
-		Trying from_gem_specification strategy...SUCCESS
-	Determining license for json:
-		Trying from_gem_specification strategy...SUCCESS
-	Determining license for nokogiri:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for pg:
-		Trying from_gem_specification strategy...SUCCESS
-	Determining license for quiet_assets:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for rack-protection:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...FAILED
-		Trying from_license_file strategy...FAILED
-	Determining license for symmetric-encryption:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for newrelic_rpm:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for uglifier:
-		Trying from_gem_specification strategy...SUCCESS
-	Determining license for sass-rails:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...FAILED
-		Trying from_license_file strategy...SUCCESS
-	Determining license for coffee-rails:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...FAILED
-		Trying from_license_file strategy...SUCCESS
-	Determining license for rspec-rails:
-		Trying from_gem_specification strategy...SUCCESS
-	Determining license for capybara:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for factory_girl_rails:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for faker:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for better_errors:
-		Trying from_gem_specification strategy...SUCCESS
-	Determining license for binding_of_caller:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for debugger:
-		Trying from_gem_specification strategy...SUCCESS
-	Determining license for simplecov:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for ci_reporter:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
-	Determining license for sqlite3:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...FAILED
-		Trying from_license_file strategy...FAILED
-	Determining license for mysql2:
-		Trying from_gem_specification strategy...FAILED
-		Trying from_scraping_homepage strategy...SUCCESS
+		
+	...
     
 	Detected 4 known licenses:
 	MIT: Expat License (14 instances)[http://directory.fsf.org/wiki/License:Expat]
