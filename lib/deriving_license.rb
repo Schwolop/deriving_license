@@ -54,12 +54,15 @@ class DerivingLicense
       raise "Invalid path to gemfile or gemspec."
     end
     
-    gemfile = Gemnasium::Parser::Gemfile.new(content)
-    
+    if /(gemspec)+/.match(path.downcase)
+      content = Gemnasium::Parser::Gemspec.new(content)
+    else
+      content = Gemnasium::Parser::Gemfile.new(content)
+    end
     detected_licenses = Hash.new(0)
     
     # For each dependency specified...
-    gemfile.dependencies.each do |d|
+    content.dependencies.each do |d|
       print "Determining license for #{d.name}:\n"
       # Try each license finding strategy...
       @@strategies.each do |s|
