@@ -1,7 +1,7 @@
 require "gemnasium/parser"
 require "bundler"
 require "safe_yaml"
-require "open-uri"
+require "curb"
 
 class DerivingLicense
   
@@ -33,6 +33,8 @@ class DerivingLicense
     "from_gem_specification",
     "from_scraping_homepage"
   ]
+  
+  @@specs_cache = {} # Cache of gem specifications previously fetched.
 
   def self.run(path=nil)
     unless path
@@ -97,12 +99,16 @@ class DerivingLicense
   end
   
   def self.get_gem_spec(dep)
+    # Check spec cache first.
+    @spec = @@specs_cache[dep]
+    return @spec if @spec
     # See if the gem is installed locally, and if not add -r to call
     Bundler.with_clean_env do # This gets out of the bundler context.
       remote = /#{dep}/.match( `gem list #{dep}` ) ? "" : "-r "      
       yaml = `gem specification #{remote}#{dep} --yaml`
       @spec = YAML.load(yaml, :safe => true)
     end
+    @@specs_cache[dep] = @spec # Cache it.
     @spec
   end
   
@@ -121,11 +127,15 @@ class DerivingLicense
   def self.from_scraping_homepage(dep)
     spec = get_gem_spec(dep)
     licenses = []
-    unless spec["homepage"]
-      []
+    unless spec["homepage"] and !spec["homepage"].empty?
+      return []
     end
-    content = open(spec["homepage"])
-    content.each_line do |l|
+    begin
+      content = Curl::Easy.perform(spec["homepage"]){|easy| easy.follow_location = true; easy.max_redirects=nil}.body_str
+    rescue
+      return []
+    end
+    content.split('\n').each do |l|
       if /license/.match(l)
         # Found the word "license", so now look for known license names.
         (@@license_details.keys + @@license_aliases.keys).each do |n|
