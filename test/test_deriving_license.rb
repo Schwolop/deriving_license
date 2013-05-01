@@ -48,9 +48,19 @@ class DerivingLicenseTest < Test::Unit::TestCase
   
   def test_describe_with_known_license
     output = capture_stdout do
-      DerivingLicense.describe(DerivingLicense.run("Gemfile"))
+      DerivingLicense.describe({"MIT" => 1})
     end
     assert_equal( false, /Detected/.match( output.string ).nil? )
+  end
+  
+  def test_describe_with_unknown_license
+    output = capture_stdout do
+      DerivingLicense.describe({"Cheese" => 1})
+    end
+    # Shouldn't say "detected"
+    assert_equal( true, /Detected/.match( output.string ).nil? )
+    # Should say "unknown"
+    assert_equal( false, /unknown/.match( output.string ).nil? )
   end
 
 end
