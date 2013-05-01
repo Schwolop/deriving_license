@@ -1,6 +1,7 @@
 require "gemnasium/parser"
 require "bundler"
 require "safe_yaml"
+require "open-uri"
 
 class DerivingLicense
   
@@ -29,7 +30,8 @@ class DerivingLicense
   # (that take a string of the dependency's name) then add their names here in 
   # order of fastest to slowest.
   @@strategies = [
-    "from_gem_specification"
+    "from_gem_specification",
+    "from_scraping_homepage"
   ]
 
   def self.run(path=nil)
@@ -94,25 +96,50 @@ class DerivingLicense
     end
   end
   
-  ##############
-  # STRATEGIES #
-  ##############
-  def self.from_gem_specification(dep)
+  def self.get_gem_spec(dep)
     # See if the gem is installed locally, and if not add -r to call
     Bundler.with_clean_env do # This gets out of the bundler context.
       remote = /#{dep}/.match( `gem list #{dep}` ) ? "" : "-r "      
       yaml = `gem specification #{remote}#{dep} --yaml`
       @spec = YAML.load(yaml, :safe => true)
     end
-    @spec["licenses"]
+    @spec
+  end
+  
+  ##############
+  # STRATEGIES #
+  ##############
+  def self.from_gem_specification(dep)
+    spec = get_gem_spec(dep)
+    spec["licenses"]
   end
   
   def self.from_license_file(dep)
+    []
   end
   
   def self.from_scraping_homepage(dep)
+    spec = get_gem_spec(dep)
+    licenses = []
+    unless spec["homepage"]
+      []
+    end
+    content = open(spec["homepage"])
+    content.each_line do |l|
+      if /license/.match(l)
+        # Found the word "license", so now look for known license names.
+        (@@license_details.keys + @@license_aliases.keys).each do |n|
+          if /#{n}/.match(l)
+            licenses << n
+            return licenses
+          end
+        end
+      end
+    end
+    [] # If we didn't return early, there's no match.
   end
   
   def self.from_parsing_readme(dep)
+    []
   end
 end
