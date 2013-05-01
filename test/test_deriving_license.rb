@@ -1,6 +1,19 @@
 require 'test/unit'
 require 'deriving_license'
 
+# Monkey-patch stdout to test puts calls
+require 'stringio'
+module Kernel
+  def capture_stdout
+    out = StringIO.new
+    $stdout = out
+    yield
+    return out
+  ensure
+    $stdout = STDOUT
+  end
+end
+
 class DerivingLicenseTest < Test::Unit::TestCase
   def test_run_throws_with_no_args
     assert_raise ArgumentError do
@@ -31,6 +44,13 @@ class DerivingLicenseTest < Test::Unit::TestCase
       DerivingLicense.run("Gemfile")
     end
     assert_equal( {"MIT"=>1}, DerivingLicense.run("Gemfile") )
+  end
+  
+  def test_describe_with_known_license
+    output = capture_stdout do
+      DerivingLicense.describe(DerivingLicense.run("Gemfile"))
+    end
+    assert_equal( false, /Detected/.match( output.string ).nil? )
   end
 
 end
