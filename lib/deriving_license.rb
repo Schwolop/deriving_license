@@ -106,4 +106,13 @@ class DerivingLicense
     end
     @spec["licenses"]
   end
+  
+  def self.from_license_file(dep)
+  end
+  
+  def self.from_scraping_homepage(dep)
+  end
+  
+  def self.from_parsing_readme(dep)
+  end
 end
