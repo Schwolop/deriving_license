@@ -130,7 +130,8 @@ class DerivingLicense
       @unpack_output = `gem unpack #{dep} --target=./deriving_license_tmp`
     end
     unpack_dir = /'([\/a-zA-Z0-9._\-]*)'/.match(@unpack_output)[1]
-    gem_filename = "#{unpack_dir.split("\/").last}.gem"
+    gem_filename = /Downloaded\ ([\/a-zA-Z0-9._\-]*)$/.match(@fetch_output)[1]
+    gem_filename += ".gem"
     license_file_paths = []
     Find.find(unpack_dir) do |path|
       license_file_paths << path if path =~ /(license|LICENSE)$/
