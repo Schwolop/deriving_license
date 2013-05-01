@@ -24,6 +24,13 @@ class DerivingLicense
     "beer" => "beerware",
     "ruby" => "Ruby"
   }
+  
+  # String array of strategies to detect licenses. Write new class functions 
+  # (that take a string of the dependency's name) then add their names here in 
+  # order of fastest to slowest.
+  @@strategies = [
+    "from_gem_specification"
+  ]
 
   def self.run(path=nil)
     unless path
@@ -42,19 +49,20 @@ class DerivingLicense
     
     gemfile = Gemnasium::Parser::Gemfile.new(content)
     
-    licenses = Hash.new(0)
+    detected_licenses = Hash.new(0)
+    
+    # For each dependency specified...
     gemfile.dependencies.each do |d|
-      # See if it's installed locally, and if not add -r to call
-      Bundler.with_clean_env do # This gets out of the bundler context.
-        remote = /#{d.name}/.match( `BUNDLE_GEMFILE=#{path}; gem list #{d.name}` ) ? "" : "-r "      
-        print "Determining license for #{d.name}#{remote.empty? ? "" : " (remote call required)"}..."
-        yaml = `gem specification #{remote}#{d.name} --yaml`
-        @spec = YAML.load(yaml, :safe => true)
+      print "Determining license for #{d.name}..."
+      # Try each license finding strategy...
+      @@strategies.each do |s|
+        @licenses = eval("#{s}(\"#{d.name}\")")
+        break if @licenses # and break out of the search if successful
       end
-      print "#{@spec["licenses"].empty? ? "UNKNOWN" : "SUCCESS"}\n"
-      @spec["licenses"].each{ |l| licenses[l]+=1 }
+      @licenses.each{ |l| detected_licenses[l]+=1 } # add each detected license to the results
+      print "DONE\n"
     end
-    licenses
+    detected_licenses
   end
   
   def self.describe(licenses)
@@ -80,5 +88,18 @@ class DerivingLicense
     unless unknowns.empty?
       puts "There #{unknowns.count==1 ? "is" : "are"} also #{unknowns.count} unknown license#{unknowns.count==1 ? "" : "s"}: #{unknowns.join(', ')}"
     end
+  end
+  
+  ##############
+  # STRATEGIES #
+  ##############
+  def self.from_gem_specification(dep)
+    # See if the gem is installed locally, and if not add -r to call
+    Bundler.with_clean_env do # This gets out of the bundler context.
+      remote = /#{dep}/.match( `gem list #{dep}` ) ? "" : "-r "      
+      yaml = `gem specification #{remote}#{dep} --yaml`
+      @spec = YAML.load(yaml, :safe => true)
+    end
+    @spec["licenses"]
   end
 end
