@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'deriving_license'
-  s.version     = '0.2.4'
+  s.version     = '0.2.5'
   s.summary     = "Deriving Licence finds the license agreements for all gems in your Gemfile"
   s.description = "Deriving Licence finds the license agreements for all gems in your Gemfile if included in your project, or in a Gemfile passed to the included binary"
   s.authors     = ["Tom Allen"]

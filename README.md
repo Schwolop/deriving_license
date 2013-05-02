@@ -7,7 +7,7 @@ Strategies:
 * from\_gem\_specification
 * from\_license\_file
 * from\_scraping\_homepage
-* from\_parsing\_readme (not yet implemented)
+* from\_parsing\_readme
 
 Example output:
 
@@ -18,10 +18,14 @@ Example output:
 	Determining license for adt:
 		Trying from_gem_specification strategy...FAILED
 		Trying from_scraping_homepage strategy...FAILED
-		Trying from_license_file strategy...FAILED
+		Trying from_license_file strategy...CUSTOM
 	Determining license for app_constants:
 		Trying from_gem_specification strategy...FAILED
 		Trying from_scraping_homepage strategy...SUCCESS
+	Determining license for bcrypt-ruby:
+		Trying from_gem_specification strategy...FAILED
+		Trying from_scraping_homepage strategy...FAILED
+		Trying from_license_file strategy...CUSTOM
 		
 	...
     
@@ -30,3 +34,4 @@ Example output:
 	Ruby: Ruby License (6 instances)[http://www.ruby-lang.org/en/about/license.txt]
 	BSD: FreeBSD Copyright (2 instances)[http://www.freebsd.org/copyright/freebsd-license.html]
 	GPL: GNU General Public License (2 instances)[http://en.wikipedia.org/wiki/GNU_General_Public_License]
+	The following dependencies have custom licenses: adt, bcrypt-ruby, bootstrap-sass, rack-protection, sass-rails, coffee-rails, sqlite3
