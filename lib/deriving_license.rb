@@ -62,6 +62,7 @@ class DerivingLicense
       content = Gemnasium::Parser::Gemfile.new(content)
     end
     detected_licenses = Hash.new(0)
+    detected_licenses["custom"]=[]
     
     # For each dependency specified...
     content.dependencies.each do |d|
@@ -71,12 +72,23 @@ class DerivingLicense
         print "\tTrying #{s} strategy..."
         @licenses = eval("#{s}(\"#{d.name}\")")
         unless @licenses.empty? # and break out of the search if successful
-          print "SUCCESS\n"
+          if @licenses.count == 1 and @licenses[0] == "custom"
+            print "CUSTOM\n"
+          else
+            print "SUCCESS\n"
+          end
           break
         end
         print "FAILED\n"
       end
-      @licenses.each{ |l| detected_licenses[l]+=1 } # add each detected license to the results
+      @licenses.each do |l| # add each detected license to the results
+        unless l == "custom"
+          detected_licenses[l]+=1
+        else
+          detected_licenses["custom"] << "#{d.name}" # the 'custom' key is 
+            # special and holds an array of the deps with custom licenses.
+        end
+      end
     end
     detected_licenses
   end
@@ -85,24 +97,29 @@ class DerivingLicense
     # Print link to description of each license type, then attempt to determine 
     # whether any notable restrictions apply (e.g. you can't sell this project, 
     # you must include a copy of the GPL, etc)
-    unknowns = []
+    unrecognized = []
     output = []
     licenses.each do |l|
-      instances = "(#{l.last} instance#{l.last == 1 ? "" : "s"})"
-      key = @@license_aliases[l.first]
-      key ||= l.first
-      if @@license_details[key]
-        output << "#{key}: #{@@license_details[key][:name]} #{instances}[#{@@license_details[key][:link]}]"
-      else
-        unknowns << key
+      unless l.first == "custom"
+        instances = "(#{l.last} instance#{l.last == 1 ? "" : "s"})"
+        key = @@license_aliases[l.first]
+        key ||= l.first
+        if @@license_details[key]
+          output << "#{key}: #{@@license_details[key][:name]} #{instances}[#{@@license_details[key][:link]}]"
+        else
+          unrecognized << key
+        end
       end
     end
     unless output.empty?
       puts "Detected #{output.count} known license#{output.count==1 ? "" : "s"}:"
       output.each{|o| puts o}
     end
-    unless unknowns.empty?
-      puts "There #{unknowns.count==1 ? "is" : "are"} also #{unknowns.count} unknown license#{unknowns.count==1 ? "" : "s"}: #{unknowns.join(', ')}"
+    unless unrecognized.empty?
+      puts "There #{unrecognized.count==1 ? "is" : "are"} also #{unrecognized.count} unrecognized license#{unrecognized.count==1 ? "" : "s"}: #{unrecognized.join(', ')}"
+    end
+    unless licenses["custom"].empty?
+      puts "The following dependencies have custom licenses: #{licenses["custom"].join(', ')}"
     end
   end
   
@@ -155,7 +172,7 @@ class DerivingLicense
       Find.find(gem_source_directory) do |path|
         license_file_paths << path if path =~ /(license|LICENSE)$/
       end
-      return [] unless license_file_paths
+      break unless license_file_paths
     
       # Found filename with the word "license", so now look for known license 
       # names in the rest of this filename.
@@ -163,6 +180,7 @@ class DerivingLicense
         (@@license_details.keys + @@license_aliases.keys).each do |n|
           if /#{n}/.match(p)
             licenses << n
+            break
           end
         end
       end
@@ -177,7 +195,7 @@ class DerivingLicense
                 (@@license_details.keys + @@license_aliases.keys).each do |n|
                   if /#{n}/.match(l)
                     licenses << n
-                    return licenses
+                    break
                   end
                 end
               end
@@ -185,6 +203,10 @@ class DerivingLicense
           end
         end
       end
+      
+      # Finally, if we couldn't find a known license, but a license file 
+      # exists, report it as custom.
+      licenses << "custom"
       
     end # end of call to yield_gem_source_directory
     
@@ -226,7 +248,7 @@ class DerivingLicense
       Find.find(gem_source_directory) do |path|
         readme_file_paths << path if path =~ /(read\.me|readme|README)$/
       end
-      return [] unless readme_file_paths
+      break unless readme_file_paths
     
       # Open each readme file and check the content.
       readme_file_paths.each do |p|
@@ -237,7 +259,7 @@ class DerivingLicense
               (@@license_details.keys + @@license_aliases.keys).each do |n|
                 if /#{n}/.match(l)
                   licenses << n
-                  return licenses
+                  break
                 end
               end
             end
