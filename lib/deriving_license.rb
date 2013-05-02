@@ -36,6 +36,7 @@ class DerivingLicense
     "from_gem_specification",
     "from_scraping_homepage",
     "from_license_file",
+    "from_parsing_readme",
   ]
   
   @@specs_cache = {} # Cache of gem specifications previously fetched.
@@ -213,10 +214,39 @@ class DerivingLicense
         end
       end
     end
-    [] # If we didn't return early, there's no match.
+    return licenses # If we didn't return early, there's no match.
   end
   
   def self.from_parsing_readme(dep)
-    []
+    licenses = []
+
+    yield_gem_source_directory(dep) do |gem_source_directory|
+
+      readme_file_paths = []
+      Find.find(gem_source_directory) do |path|
+        readme_file_paths << path if path =~ /(read\.me|readme|README)$/
+      end
+      return [] unless readme_file_paths
+    
+      # Open each readme file and check the content.
+      readme_file_paths.each do |p|
+        if File.exist?(p)
+          File.open(p).each_line do |l|
+            if /license/.match(l)
+              # Found the word "license", so now look for known license names.
+              (@@license_details.keys + @@license_aliases.keys).each do |n|
+                if /#{n}/.match(l)
+                  licenses << n
+                  return licenses
+                end
+              end
+            end
+          end
+        end
+      end
+    
+    end # end of call to yield_gem_source_directory
+    return licenses
   end
-end
+  
+end # end of DerivingLicense class
