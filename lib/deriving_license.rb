@@ -90,9 +90,6 @@ class DerivingLicense
         end
       end
     end
-    if detected_licenses["custom"].empty?
-      detected_licenses.delete("custom")
-    end
     detected_licenses
   end
   
@@ -121,7 +118,7 @@ class DerivingLicense
     unless unrecognized.empty?
       puts "There #{unrecognized.count==1 ? "is" : "are"} also #{unrecognized.count} unrecognized license#{unrecognized.count==1 ? "" : "s"}: #{unrecognized.join(', ')}"
     end
-    unless licenses["custom"].nil? or licenses["custom"].empty?
+    unless licenses["custom"].empty?
       puts "The following dependencies have custom licenses: #{licenses["custom"].join(', ')}"
     end
   end
@@ -209,7 +206,9 @@ class DerivingLicense
       
       # Finally, if we couldn't find a known license, but a license file 
       # exists, report it as custom.
-      licenses << "custom"
+      if licenses.empty?
+        licenses << "custom"
+      end
       
     end # end of call to yield_gem_source_directory
     
