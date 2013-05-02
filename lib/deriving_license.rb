@@ -25,7 +25,8 @@ class DerivingLicense
     "FreeBSD" => "BSD",
     "Expat" => "MIT",
     "beer" => "beerware",
-    "ruby" => "Ruby"
+    "ruby" => "Ruby",
+    "Apache License" => "Apache",
   }
   
   # String array of strategies to detect licenses. Write new class functions 
@@ -34,7 +35,7 @@ class DerivingLicense
   @@strategies = [
     "from_gem_specification",
     "from_scraping_homepage",
-    "from_license_file"
+    "from_license_file",
   ]
   
   @@specs_cache = {} # Cache of gem specifications previously fetched.
@@ -118,6 +119,24 @@ class DerivingLicense
     @spec
   end
   
+  def self.yield_gem_source_directory(dep)
+    # Yields a path to a temporary directory containing the gem source, then 
+    # cleans up after itself. Supply a block taking the gem_dir_path and 
+    # interrogate the directory as required.
+    Bundler.with_clean_env do # This gets out of the bundler context.
+      @fetch_output = `gem fetch #{dep}`
+      @unpack_output = `gem unpack #{dep} --target=./deriving_license_tmp`
+    end
+    unpack_dir = /'([\/a-zA-Z0-9._\-]*)'/.match(@unpack_output)[1]
+    gem_filename = /Downloaded\ ([\/a-zA-Z0-9._\-]*)$/.match(@fetch_output)[1]
+    gem_filename += ".gem"
+    
+    yield unpack_dir, gem_filename if block_given?
+    
+    `rm -rf ./deriving_license_tmp` # Clean up tmp dir. Don't fuck this up.
+    `rm #{gem_filename}` # Remove fetched gem.
+  end
+  
   ##############
   # STRATEGIES #
   ##############
@@ -128,50 +147,46 @@ class DerivingLicense
   
   def self.from_license_file(dep)
     licenses = []
-    Bundler.with_clean_env do # This gets out of the bundler context.
-      @fetch_output = `gem fetch #{dep}`
-      @unpack_output = `gem unpack #{dep} --target=./deriving_license_tmp`
-    end
-    unpack_dir = /'([\/a-zA-Z0-9._\-]*)'/.match(@unpack_output)[1]
-    gem_filename = /Downloaded\ ([\/a-zA-Z0-9._\-]*)$/.match(@fetch_output)[1]
-    gem_filename += ".gem"
-    license_file_paths = []
-    Find.find(unpack_dir) do |path|
-      license_file_paths << path if path =~ /(license|LICENSE)$/
-    end
-    return [] unless license_file_paths
+
+    yield_gem_source_directory(dep) do |gem_source_directory|
+
+      license_file_paths = []
+      Find.find(gem_source_directory) do |path|
+        license_file_paths << path if path =~ /(license|LICENSE)$/
+      end
+      return [] unless license_file_paths
     
-    # Found filename with the word "license", so now look for known license 
-    # names in the rest of this filename.
-    license_file_paths.each do |p|
-      (@@license_details.keys + @@license_aliases.keys).each do |n|
-        if /#{n}/.match(p)
-          licenses << n
+      # Found filename with the word "license", so now look for known license 
+      # names in the rest of this filename.
+      license_file_paths.each do |p|
+        (@@license_details.keys + @@license_aliases.keys).each do |n|
+          if /#{n}/.match(p)
+            licenses << n
+          end
         end
       end
-    end
     
-    if licenses.empty?
-      # Failing that, open each file and check the content in a similar manner.
-      license_file_paths.each do |p|
-        if File.exist?(p)
-          File.open(p).each_line do |l|
-            if /license/.match(l)
-              # Found the word "license", so now look for known license names.
-              (@@license_details.keys + @@license_aliases.keys).each do |n|
-                if /#{n}/.match(l)
-                  licenses << n
-                  return licenses
+      if licenses.empty?
+        # Failing that, open each file and check the content in a similar manner.
+        license_file_paths.each do |p|
+          if File.exist?(p)
+            File.open(p).each_line do |l|
+              if /license/.match(l)
+                # Found the word "license", so now look for known license names.
+                (@@license_details.keys + @@license_aliases.keys).each do |n|
+                  if /#{n}/.match(l)
+                    licenses << n
+                    return licenses
+                  end
                 end
               end
             end
           end
         end
       end
-    end
+      
+    end # end of call to yield_gem_source_directory
     
-    `rm -rf ./deriving_license_tmp` # Clean up tmp dir. Don't fuck this up.
-    `rm #{gem_filename}` # Remove fetched gem.
     return licenses
 
   end
