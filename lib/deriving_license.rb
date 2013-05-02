@@ -90,6 +90,9 @@ class DerivingLicense
         end
       end
     end
+    if detected_licenses["custom"].empty?
+      detected_licenses.delete("custom")
+    end
     detected_licenses
   end
   
@@ -118,7 +121,7 @@ class DerivingLicense
     unless unrecognized.empty?
       puts "There #{unrecognized.count==1 ? "is" : "are"} also #{unrecognized.count} unrecognized license#{unrecognized.count==1 ? "" : "s"}: #{unrecognized.join(', ')}"
     end
-    unless licenses["custom"].empty?
+    unless licenses["custom"].nil? or licenses["custom"].empty?
       puts "The following dependencies have custom licenses: #{licenses["custom"].join(', ')}"
     end
   end
