@@ -178,6 +178,17 @@ class DerivingLicense
     licenses
   end
   
+  def self.search_in_content(content)
+    licenses = []
+    (@@license_details.keys + @@license_aliases.keys).each do |n|
+      if /#{n}/.match(content)
+        licenses << n
+        return licenses
+      end
+    end
+    licenses
+  end
+  
   ##############
   # STRATEGIES #
   ##############
@@ -200,12 +211,8 @@ class DerivingLicense
       # Found filename with the word "license", so now look for known license 
       # names in the rest of this filename.
       license_file_paths.each do |p|
-        (@@license_details.keys + @@license_aliases.keys).each do |n|
-          if /#{n}/.match(p)
-            licenses << n
-            break
-          end
-        end
+        licenses = search_in_content(p)
+        break unless licenses.empty?
       end
     
       if licenses.empty?
@@ -238,13 +245,8 @@ class DerivingLicense
     end
     content.split('\n').each do |l|
       if /license/.match(l)
-        # Found the word "license", so now look for known license names.
-        (@@license_details.keys + @@license_aliases.keys).each do |n|
-          if /#{n}/.match(l)
-            licenses << n
-            return licenses
-          end
-        end
+        licenses = search_in_content(l)
+        break unless licenses.empty?
       end
     end
     return licenses # If we didn't return early, there's no match.
