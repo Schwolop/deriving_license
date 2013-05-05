@@ -90,6 +90,9 @@ class DerivingLicense
         end
       end
     end
+    if detected_licenses["custom"].empty?
+      detected_licenses.delete("custom")
+    end
     detected_licenses
   end
   
@@ -118,7 +121,7 @@ class DerivingLicense
     unless unrecognized.empty?
       puts "There #{unrecognized.count==1 ? "is" : "are"} also #{unrecognized.count} unrecognized license#{unrecognized.count==1 ? "" : "s"}: #{unrecognized.join(', ')}"
     end
-    unless licenses["custom"].empty?
+    if licenses["custom"] and !licenses["custom"].empty?
       puts "The following dependencies have custom licenses: #{licenses["custom"].join(', ')}"
     end
   end
@@ -155,6 +158,26 @@ class DerivingLicense
     `rm #{gem_filename}` # Remove fetched gem.
   end
   
+  def self.search_in_paths(paths)
+    licenses = []
+    paths.each do |p|
+      if File.exist?(p)
+        File.open(p).each_line do |l|
+          if /license/.match(l)
+            # Found the word "license", so now look for known license names.
+            (@@license_details.keys + @@license_aliases.keys).each do |n|
+              if /#{n}/.match(l)
+                licenses << n
+                break
+              end
+            end
+          end
+        end
+      end
+    end
+    licenses
+  end
+  
   ##############
   # STRATEGIES #
   ##############
@@ -187,21 +210,7 @@ class DerivingLicense
     
       if licenses.empty?
         # Failing that, open each file and check the content in a similar manner.
-        license_file_paths.each do |p|
-          if File.exist?(p)
-            File.open(p).each_line do |l|
-              if /license/.match(l)
-                # Found the word "license", so now look for known license names.
-                (@@license_details.keys + @@license_aliases.keys).each do |n|
-                  if /#{n}/.match(l)
-                    licenses << n
-                    break
-                  end
-                end
-              end
-            end
-          end
-        end
+        licenses = search_in_paths(license_file_paths)
       end
       
       # Finally, if we couldn't find a known license, but a license file 
@@ -253,21 +262,7 @@ class DerivingLicense
       break unless readme_file_paths
     
       # Open each readme file and check the content.
-      readme_file_paths.each do |p|
-        if File.exist?(p)
-          File.open(p).each_line do |l|
-            if /license/.match(l)
-              # Found the word "license", so now look for known license names.
-              (@@license_details.keys + @@license_aliases.keys).each do |n|
-                if /#{n}/.match(l)
-                  licenses << n
-                  break
-                end
-              end
-            end
-          end
-        end
-      end
+      licenses = search_in_paths(readme_file_paths)
     
     end # end of call to yield_gem_source_directory
     return licenses
