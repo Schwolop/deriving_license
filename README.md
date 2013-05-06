@@ -9,6 +9,8 @@ Strategies:
 * from\_scraping\_homepage
 * from\_parsing\_readme
 
+[![Build Status](https://travis-ci.org/Schwolop/deriving-license.png)](https://travis-ci.org/Schwolop/deriving-license)
+
 Example output:
 
     $ deriving_license ~/Code/rails_sample_app/Gemfile
