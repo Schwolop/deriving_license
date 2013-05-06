@@ -40,10 +40,19 @@ class DerivingLicenseTest < Test::Unit::TestCase
     assert_equal( true, DerivingLicense.run("./test/empty.gemfile").empty? )
   end
   
-  def test_run_with_valid_arg
+  def test_run_with_valid_gemfile_arg
     assert_nothing_raised do
       output = capture_stdout do
         @result = DerivingLicense.run("Gemfile")
+      end
+    end
+    assert_equal( true, @result.has_key?("MIT") )
+  end
+  
+  def test_run_with_valid_gemspec_arg
+    assert_nothing_raised do
+      output = capture_stdout do
+        @result = DerivingLicense.run("deriving_license.gemspec")
       end
     end
     assert_equal( true, @result.has_key?("MIT") )
