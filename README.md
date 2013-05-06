@@ -34,4 +34,4 @@ Example output:
 	Ruby: Ruby License (6 instances)[http://www.ruby-lang.org/en/about/license.txt]
 	BSD: FreeBSD Copyright (2 instances)[http://www.freebsd.org/copyright/freebsd-license.html]
 	GPL: GNU General Public License (2 instances)[http://en.wikipedia.org/wiki/GNU_General_Public_License]
-	The following dependencies have custom licenses: adt, bcrypt-ruby, bootstrap-sass, rack-protection, sass-rails, coffee-rails, sqlite3
+	The following dependencies have custom licenses: adt, bcrypt-ruby, bootstrap-sass, rack-protection, sqlite3
