@@ -1,3 +1,6 @@
+require 'simplecov'
+SimpleCov.start
+
 require 'test/unit'
 require 'deriving_license'
 
@@ -21,12 +24,6 @@ class DerivingLicenseTest < Test::Unit::TestCase
     end
   end
 
-  def test_run_throws_with_multiple_args
-    assert_raise ArgumentError do
-      DerivingLicense.run("Gemfile1", "Gemfile2")
-    end
-  end
-  
   def test_run_throws_if_path_is_invalid
     assert_raise ArgumentError do
       DerivingLicense.run("Ceci n'est pas un dossier.")
@@ -39,11 +36,17 @@ class DerivingLicenseTest < Test::Unit::TestCase
     end
   end
   
+  def test_run_with_empty_gemfile_returns_empty_hash
+    assert_equal( true, DerivingLicense.run("./test/empty.gemfile").empty? )
+  end
+  
   def test_run_with_valid_arg
     assert_nothing_raised do
-      DerivingLicense.run("Gemfile")
+      output = capture_stdout do
+        @result = DerivingLicense.run("Gemfile")
+      end
     end
-    assert_equal( {"MIT"=>1}, DerivingLicense.run("Gemfile") )
+    assert_equal( true, @result.has_key?("MIT") )
   end
   
   def test_describe_with_known_license
@@ -62,5 +65,45 @@ class DerivingLicenseTest < Test::Unit::TestCase
     # Should say "unknown"
     assert_equal( false, /unrecognized/.match( output.string ).nil? )
   end
+  
+  def test_from_scraping_strategy
+    output = capture_stdout do
+      @result = DerivingLicense.run("./test/requires_scraping.gemfile", ["from_scraping_homepage"])
+    end
+    assert_equal( false, @result.empty? )
+    assert_equal( false, /from_scraping_homepage strategy...SUCCESS/.match( output.string ).nil? ) # Should be SUCCESS
+  end
 
+  def test_from_license_filename
+    output = capture_stdout do
+      @result = DerivingLicense.run("./test/requires_license_filename.gemfile", ["from_license_file"])
+    end
+    assert_equal( false, @result.empty? )
+    assert_equal( true, /from_license_file strategy...FAILED/.match( output.string ).nil? ) # Shouldn't be FAILED
+  end
+  
+  def test_from_license_file_parsing
+    output = capture_stdout do
+      @result = DerivingLicense.run("./test/requires_license_file_parsing.gemfile", ["from_license_file"])
+    end
+    assert_equal( false, @result.empty? )
+    assert_equal( true, /from_license_file strategy...FAILED/.match( output.string ).nil? ) # Shouldn't be FAILED
+  end
+  
+  def test_from_license_file_parsing_but_is_custom
+    output = capture_stdout do
+      @result = DerivingLicense.run("./test/requires_license_file_parsing_but_is_custom.gemfile", ["from_license_file"])
+    end
+    assert_equal( false, @result.empty? )
+    assert_equal( false, /from_license_file strategy...CUSTOM/.match( output.string ).nil? ) # Should be CUSTOM
+  end
+  
+  def test_from_readme_file_parsing
+    output = capture_stdout do
+      @result = DerivingLicense.run("./test/requires_readme_file_parsing.gemfile", ["from_parsing_readme"])
+    end
+    assert_equal( false, @result.empty? )
+    assert_equal( false, /from_parsing_readme strategy...SUCCESS/.match( output.string ).nil? )
+  end
+  
 end

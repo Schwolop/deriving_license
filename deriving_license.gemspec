@@ -16,4 +16,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "gemnasium-parser"
   s.add_runtime_dependency "safe_yaml"
   s.add_runtime_dependency "curb"
+  s.add_development_dependency "simplecov"
 end

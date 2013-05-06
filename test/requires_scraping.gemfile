@@ -1,0 +1,3 @@
+source "https://rubygems.org"
+
+gem "rails" # Rails gem describes it's license on the Rails website.
