@@ -57,6 +57,11 @@ class DerivingLicense
       raise "Invalid path to gemfile or gemspec."
     end
     
+    strategies.each do |s|
+      unless @strategies.include?(s)
+        raise "Supplied strategies must be from the following list: [#{@strategies.join(', ')}]"
+      end
+    end unless strategies.nil?
     available_strategies = strategies.nil? ? @strategies : strategies
     
     if /(gemspec)+/.match(path.downcase)

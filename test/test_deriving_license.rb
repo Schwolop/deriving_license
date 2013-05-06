@@ -58,6 +58,14 @@ class DerivingLicenseTest < Test::Unit::TestCase
     assert_equal( true, @result.has_key?("MIT") )
   end
   
+  def test_run_with_non_existant_strategies
+    assert_raise RuntimeError do
+      output = capture_stdout do
+        DerivingLicense.run("Gemfile", ["cheese_strategy"])
+      end
+    end
+  end
+  
   def test_describe_with_known_license
     output = capture_stdout do
       DerivingLicense.describe({"MIT" => 1})
