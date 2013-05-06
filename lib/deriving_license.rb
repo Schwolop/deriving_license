@@ -10,7 +10,7 @@ class DerivingLicense
   
   # TODO: Scrape http://www.gnu.org/licenses/license-list.html#SoftwareLicenses 
   # and auto-magically generate these details.
-  @@license_details = {
+  @license_details = {
     # key -> hash of (Name, Link, [Tags]), where tags is an array that may include [:gpl_compatible, :copyleft_compatible, :has_restrictions]
     "GPL" => {name:"GNU General Public License",link:"http://en.wikipedia.org/wiki/GNU_General_Public_License",tags:[:gpl_compatible, :copyleft_compatible, :has_restrictions]},
     "MIT" => {name:"Expat License",link:"http://directory.fsf.org/wiki/License:Expat",tags:[:gpl_compatible, :has_restrictions]},
@@ -20,11 +20,12 @@ class DerivingLicense
     "Apache" => {name:"Apache License",link:"http://www.apache.org/licenses/LICENSE-2.0",tags:[:has_restrictions]},
   }
 
-  @@license_aliases = {
+  @license_aliases = {
     # hash of names to keys of the license in the master list.
     "FreeBSD" => "BSD",
     "Expat" => "MIT",
     "beer" => "beerware",
+    "BEER-WARE" => "beerware",
     "ruby" => "Ruby",
     "Apache License" => "Apache",
   }
@@ -32,16 +33,16 @@ class DerivingLicense
   # String array of strategies to detect licenses. Write new class functions 
   # (that take a string of the dependency's name) then add their names here in 
   # order of fastest to slowest.
-  @@strategies = [
+  @strategies = [
     "from_gem_specification",
     "from_scraping_homepage",
     "from_license_file",
     "from_parsing_readme",
   ]
   
-  @@specs_cache = {} # Cache of gem specifications previously fetched.
+  @specs_cache = {} # Cache of gem specifications previously fetched.
 
-  def self.run(path=nil)
+  def self.run(path=nil, strategies=nil)
     unless path
       raise ArgumentError.new("Path to Gemfile or Gemspec required")
     end
@@ -56,6 +57,8 @@ class DerivingLicense
       raise "Invalid path to gemfile or gemspec."
     end
     
+    available_strategies = strategies.nil? ? @strategies : strategies
+    
     if /(gemspec)+/.match(path.downcase)
       content = Gemnasium::Parser::Gemspec.new(content)
     else
@@ -68,7 +71,7 @@ class DerivingLicense
     content.dependencies.each do |d|
       print "Determining license for #{d.name}:\n"
       # Try each license finding strategy...
-      @@strategies.each do |s|
+      available_strategies.each do |s|
         print "\tTrying #{s} strategy..."
         @licenses = eval("#{s}(\"#{d.name}\")")
         unless @licenses.empty? # and break out of the search if successful
@@ -105,10 +108,10 @@ class DerivingLicense
     licenses.each do |l|
       unless l.first == "custom"
         instances = "(#{l.last} instance#{l.last == 1 ? "" : "s"})"
-        key = @@license_aliases[l.first]
+        key = @license_aliases[l.first]
         key ||= l.first
-        if @@license_details[key]
-          output << "#{key}: #{@@license_details[key][:name]} #{instances}[#{@@license_details[key][:link]}]"
+        if @license_details[key]
+          output << "#{key}: #{@license_details[key][:name]} #{instances} [#{@license_details[key][:link]}]"
         else
           unrecognized << key
         end
@@ -121,14 +124,14 @@ class DerivingLicense
     unless unrecognized.empty?
       puts "There #{unrecognized.count==1 ? "is" : "are"} also #{unrecognized.count} unrecognized license#{unrecognized.count==1 ? "" : "s"}: #{unrecognized.join(', ')}"
     end
-    if licenses["custom"] and !licenses["custom"].empty?
+    if licenses.has_key?("custom") and !licenses["custom"].empty?
       puts "The following dependencies have custom licenses: #{licenses["custom"].join(', ')}"
     end
   end
   
   def self.get_gem_spec(dep)
     # Check spec cache first.
-    @spec = @@specs_cache[dep]
+    @spec = @specs_cache[dep]
     return @spec if @spec
     # See if the gem is installed locally, and if not add -r to call
     Bundler.with_clean_env do # This gets out of the bundler context.
@@ -136,7 +139,7 @@ class DerivingLicense
       yaml = `gem specification #{remote}#{dep} --yaml`
       @spec = YAML.load(yaml, :safe => true)
     end
-    @@specs_cache[dep] = @spec # Cache it.
+    @specs_cache[dep] = @spec # Cache it.
     @spec
   end
   
@@ -163,9 +166,9 @@ class DerivingLicense
     paths.each do |p|
       if File.exist?(p)
         File.open(p).each_line do |l|
-          if /license/.match(l)
+          if /license/i.match(l)
             # Found the word "license", so now look for known license names.
-            (@@license_details.keys + @@license_aliases.keys).each do |n|
+            (@license_details.keys + @license_aliases.keys).each do |n|
               if /#{n}/.match(l)
                 licenses << n
                 break
@@ -180,7 +183,7 @@ class DerivingLicense
   
   def self.search_in_content(content)
     licenses = []
-    (@@license_details.keys + @@license_aliases.keys).each do |n|
+    (@license_details.keys + @license_aliases.keys).each do |n|
       if /#{n}/.match(content)
         licenses << n
         return licenses
@@ -259,9 +262,11 @@ class DerivingLicense
 
       readme_file_paths = []
       Find.find(gem_source_directory) do |path|
-        readme_file_paths << path if path =~ /(read\.me|readme|README)$/
+        if path =~ /(read\.me|readme)/i
+          readme_file_paths << path 
+        end
       end
-      break unless readme_file_paths
+      break if readme_file_paths.empty?
     
       # Open each readme file and check the content.
       licenses = search_in_paths(readme_file_paths)
