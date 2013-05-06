@@ -89,6 +89,14 @@ class DerivingLicenseTest < Test::Unit::TestCase
     assert_equal( false, @result.empty? )
     assert_equal( false, /from_scraping_homepage strategy...SUCCESS/.match( output.string ).nil? ) # Should be SUCCESS
   end
+  
+  def test_from_scraping_strategy_with_invalid_homepage
+    output = capture_stdout do
+      @result = DerivingLicense.run("./test/requires_scraping_but_invalid_homepage.gemfile", ["from_scraping_homepage"])
+    end
+    assert_equal( true, @result.empty? )
+    assert_equal( false, /from_scraping_homepage strategy...FAILED/.match( output.string ).nil? ) # Should be FAILED
+  end
 
   def test_from_license_filename
     output = capture_stdout do

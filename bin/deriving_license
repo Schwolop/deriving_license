@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
 require 'deriving_license'
-licenses = DerivingLicense.run(ARGV[0])
+  licenses = DerivingLicense.run(ARGV[0])
 print "\n"
 DerivingLicense.describe(licenses)
