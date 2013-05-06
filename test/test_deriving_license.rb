@@ -75,6 +75,13 @@ class DerivingLicenseTest < Test::Unit::TestCase
     assert_equal( false, /unrecognized/.match( output.string ).nil? )
   end
   
+  def test_describe_with_custom_license
+    output = capture_stdout do
+      DerivingLicense.describe( {"custom" => ["fake-gem"]} )
+    end
+    assert_equal( false, /have custom license/i.match( output.string ).nil? )
+  end
+  
   def test_from_scraping_strategy
     output = capture_stdout do
       @result = DerivingLicense.run("./test/requires_scraping.gemfile", ["from_scraping_homepage"])
