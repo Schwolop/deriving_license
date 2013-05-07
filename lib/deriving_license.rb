@@ -64,23 +64,44 @@ class DerivingLicense
     end unless strategies.nil?
     available_strategies = strategies.nil? ? @strategies : strategies
     
-    if /(gemspec)+/.match(path.downcase)
-      content = Gemnasium::Parser::Gemspec.new(content)
-    else
+    gemspec_content = ""
+    deps = []
+    if /gemspec/.match(path.downcase) # Gemspecs...
+      deps = Gemnasium::Parser::Gemspec.new(content).dependencies
+    else # Gemfiles...
       content = Gemnasium::Parser::Gemfile.new(content)
+      if content.gemspec? # If the gemfile sources a gemspec.
+        begin
+          gemspec_content = File.open(content.gemspec, "r").read
+        rescue # If we fail to read the gemspec, search current directory
+          possible_gemspec_files = Find.find( File.dirname(content.gemspec) )
+          if possible_gemspec_files.count == 1
+            begin
+              gemspec_content = File.open(possible_gemspec_files[0], "r").read
+            rescue
+              raise "Could not open gemspec file \"#{possible_gemspec_files[0]}\" that was called by gemfile."
+            end
+          else
+            raise "Gemfile calls out to unnamed gemspec, but multiple gemspec files found in gemfile's directory. Tell the developer to name their sources!"
+          end
+        end
+      end
+      deps = content.dependencies
+      deps += Gemnasium::Parser::Gemspec.new(gemspec_content).dependencies unless gemspec_content.empty?
     end
     detected_licenses = Hash.new(0)
     detected_licenses["custom"]=[]
     
     # For each dependency specified...
-    content.dependencies.each do |d|
+    licenses = []
+    deps.each do |d|
       print "Determining license for #{d.name}:\n"
       # Try each license finding strategy...
       available_strategies.each do |s|
         print "\tTrying #{s} strategy..."
-        @licenses = eval("#{s}(\"#{d.name}\")")
-        unless @licenses.empty? # and break out of the search if successful
-          if @licenses.count == 1 and @licenses[0] == "custom"
+        licenses = eval("#{s}(\"#{d.name}\")")
+        unless licenses.empty? # and break out of the search if successful
+          if licenses.count == 1 and licenses[0] == "custom"
             print "CUSTOM\n"
           else
             print "SUCCESS\n"
@@ -89,7 +110,7 @@ class DerivingLicense
         end
         print "FAILED\n"
       end
-      @licenses.each do |l| # add each detected license to the results
+      licenses.each do |l| # add each detected license to the results
         unless l == "custom"
           detected_licenses[l]+=1
         else
