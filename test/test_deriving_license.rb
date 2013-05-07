@@ -138,4 +138,17 @@ class DerivingLicenseTest < Test::Unit::TestCase
     assert_equal( false, /from_parsing_readme strategy...SUCCESS/.match( output.string ).nil? )
   end
   
+  def test_gemfile_with_call_to_gemspec
+    output = capture_stdout do
+      @gemfileResult = DerivingLicense.run("Gemfile")
+      @gemspecResult = DerivingLicense.run("deriving_license.gemspec")
+    end
+    @gemspecResult.each do |k,v|
+      # Each license found in the gemspec should be found in the gemfile too 
+      # (because the gemfile includes the gemspec, so it's a superset.)
+      assert_equal( true, @gemfileResult.has_key?(k) )
+    end
+    assert_equal( true, @gemfileResult.count >= @gemspecResult.count )
+  end
+  
 end
