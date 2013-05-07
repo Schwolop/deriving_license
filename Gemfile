@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-gemspec
+gemspec :name => "deriving_license"
 
 # NB: For convenient testing, it's worth keeping this here.
 group :test do
