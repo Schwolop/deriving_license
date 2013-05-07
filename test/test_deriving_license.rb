@@ -41,21 +41,23 @@ class DerivingLicenseTest < Test::Unit::TestCase
   end
   
   def test_run_with_valid_gemfile_arg
+    result = {}
     assert_nothing_raised do
       output = capture_stdout do
-        @result = DerivingLicense.run("Gemfile")
+        result = DerivingLicense.run("Gemfile")
       end
     end
-    assert_equal( true, @result.has_key?("MIT") )
+    assert_equal( true, result.has_key?("MIT") )
   end
   
   def test_run_with_valid_gemspec_arg
+    result = {}
     assert_nothing_raised do
       output = capture_stdout do
-        @result = DerivingLicense.run("deriving_license.gemspec")
+        result = DerivingLicense.run("deriving_license.gemspec")
       end
     end
-    assert_equal( true, @result.has_key?("MIT") )
+    assert_equal( true, result.has_key?("MIT") )
   end
   
   def test_run_with_non_existant_strategies
@@ -91,64 +93,72 @@ class DerivingLicenseTest < Test::Unit::TestCase
   end
   
   def test_from_scraping_strategy
+    result = {}
     output = capture_stdout do
-      @result = DerivingLicense.run("./test/requires_scraping.gemfile", ["from_scraping_homepage"])
+      result = DerivingLicense.run("./test/requires_scraping.gemfile", ["from_scraping_homepage"])
     end
-    assert_equal( false, @result.empty? )
+    assert_equal( false, result.empty? )
     assert_equal( false, /from_scraping_homepage strategy...SUCCESS/.match( output.string ).nil? ) # Should be SUCCESS
   end
   
   def test_from_scraping_strategy_with_invalid_homepage
+    result = {}
     output = capture_stdout do
-      @result = DerivingLicense.run("./test/requires_scraping_but_invalid_homepage.gemfile", ["from_scraping_homepage"])
+      result = DerivingLicense.run("./test/requires_scraping_but_invalid_homepage.gemfile", ["from_scraping_homepage"])
     end
-    assert_equal( true, @result.empty? )
+    assert_equal( true, result.empty? )
     assert_equal( false, /from_scraping_homepage strategy...FAILED/.match( output.string ).nil? ) # Should be FAILED
   end
 
   def test_from_license_filename
+    result = {}
     output = capture_stdout do
-      @result = DerivingLicense.run("./test/requires_license_filename.gemfile", ["from_license_file"])
+      result = DerivingLicense.run("./test/requires_license_filename.gemfile", ["from_license_file"])
     end
-    assert_equal( false, @result.empty? )
+    assert_equal( false, result.empty? )
     assert_equal( true, /from_license_file strategy...FAILED/.match( output.string ).nil? ) # Shouldn't be FAILED
   end
   
   def test_from_license_file_parsing
+    result = {}
     output = capture_stdout do
-      @result = DerivingLicense.run("./test/requires_license_file_parsing.gemfile", ["from_license_file"])
+      result = DerivingLicense.run("./test/requires_license_file_parsing.gemfile", ["from_license_file"])
     end
-    assert_equal( false, @result.empty? )
+    assert_equal( false, result.empty? )
     assert_equal( true, /from_license_file strategy...FAILED/.match( output.string ).nil? ) # Shouldn't be FAILED
   end
   
   def test_from_license_file_parsing_but_is_custom
+    result = {}
     output = capture_stdout do
-      @result = DerivingLicense.run("./test/requires_license_file_parsing_but_is_custom.gemfile", ["from_license_file"])
+      result = DerivingLicense.run("./test/requires_license_file_parsing_but_is_custom.gemfile", ["from_license_file"])
     end
-    assert_equal( false, @result.empty? )
+    assert_equal( false, result.empty? )
     assert_equal( false, /from_license_file strategy...CUSTOM/.match( output.string ).nil? ) # Should be CUSTOM
   end
   
   def test_from_readme_file_parsing
+    result = {}
     output = capture_stdout do
-      @result = DerivingLicense.run("./test/requires_readme_file_parsing.gemfile", ["from_parsing_readme"])
+      result = DerivingLicense.run("./test/requires_readme_file_parsing.gemfile", ["from_parsing_readme"])
     end
-    assert_equal( false, @result.empty? )
+    assert_equal( false, result.empty? )
     assert_equal( false, /from_parsing_readme strategy...SUCCESS/.match( output.string ).nil? )
   end
   
   def test_gemfile_with_call_to_gemspec
+    gemfileResult = {}
+    gemspecResult = {}
     output = capture_stdout do
-      @gemfileResult = DerivingLicense.run("Gemfile")
-      @gemspecResult = DerivingLicense.run("deriving_license.gemspec")
+      gemfileResult = DerivingLicense.run("Gemfile")
+      gemspecResult = DerivingLicense.run("deriving_license.gemspec")
     end
-    @gemspecResult.each do |k,v|
+    gemspecResult.each do |k,v|
       # Each license found in the gemspec should be found in the gemfile too 
       # (because the gemfile includes the gemspec, so it's a superset.)
-      assert_equal( true, @gemfileResult.has_key?(k) )
+      assert_equal( true, gemfileResult.has_key?(k) )
     end
-    assert_equal( true, @gemfileResult.count >= @gemspecResult.count )
+    assert_equal( true, gemfileResult.count >= gemspecResult.count )
   end
   
 end

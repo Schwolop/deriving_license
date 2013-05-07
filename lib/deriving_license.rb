@@ -157,16 +157,16 @@ class DerivingLicense
   
   def self.get_gem_spec(dep)
     # Check spec cache first.
-    @spec = @specs_cache[dep]
-    return @spec if @spec
+    spec = @specs_cache[dep]
+    return spec if spec
     # See if the gem is installed locally, and if not add -r to call
     Bundler.with_clean_env do # This gets out of the bundler context.
       remote = /#{dep}/.match( `gem list #{dep}` ) ? "" : "-r "      
       yaml = `gem specification #{remote}#{dep} --yaml`
-      @spec = YAML.load(yaml, :safe => true)
+      spec = YAML.load(yaml, :safe => true)
     end
-    @specs_cache[dep] = @spec # Cache it.
-    @spec
+    @specs_cache[dep] = spec # Cache it.
+    spec
   end
   
   def self.yield_gem_source_directory(dep)
