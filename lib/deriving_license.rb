@@ -61,64 +61,13 @@ class DerivingLicense
     raise "Supplied strategies must be from the following list: [#{@strategies.join(', ')}]" if available_strategies.count != strategies.count
     available_strategies = @strategies if strategies.empty?
     
-    gemspec_content = ""
-    deps = []
-    if /gemspec/.match(path.downcase) # Gemspecs...
-      deps = Gemnasium::Parser::Gemspec.new(content).dependencies
-    else # Gemfiles...
-      content = Gemnasium::Parser::Gemfile.new(content)
-      if content.gemspec? # If the gemfile sources a gemspec.
-        begin
-          gemspec_content = File.open(content.gemspec, "r").read
-        rescue # If we fail to read the gemspec, search current directory
-          possible_gemspec_files = Find.find( File.dirname(content.gemspec) )
-          if possible_gemspec_files.count == 1
-            begin
-              gemspec_content = File.open(possible_gemspec_files[0], "r").read
-            rescue
-              raise "Could not open gemspec file \"#{possible_gemspec_files[0]}\" that was called by gemfile."
-            end
-          else
-            raise "Gemfile calls out to unnamed gemspec, but multiple gemspec files found in gemfile's directory. Tell the developer to name their sources!"
-          end
-        end
-      end
-      deps = content.dependencies
-      deps += Gemnasium::Parser::Gemspec.new(gemspec_content).dependencies unless gemspec_content.empty?
-    end
+    deps = find_deps(path, content)
     detected_licenses = Hash.new(0)
     detected_licenses["custom"]=[]
     
     # For each dependency specified...
-    licenses = []
-    deps.each do |d|
-      print "Determining license for #{d.name}:\n"
-      # Try each license finding strategy...
-      available_strategies.each do |s|
-        print "\tTrying #{s} strategy..."
-        licenses = eval("#{s}(\"#{d.name}\")")
-        unless licenses.empty? # and break out of the search if successful
-          if licenses.count == 1 and licenses[0] == "custom"
-            print "CUSTOM\n"
-          else
-            print "SUCCESS\n"
-          end
-          break
-        end
-        print "FAILED\n"
-      end
-      licenses.each do |l| # add each detected license to the results
-        unless l == "custom"
-          detected_licenses[l]+=1
-        else
-          detected_licenses["custom"] << "#{d.name}" # the 'custom' key is 
-            # special and holds an array of the deps with custom licenses.
-        end
-      end
-    end
-    if detected_licenses["custom"].empty?
-      detected_licenses.delete("custom")
-    end
+    determine_licenses(deps,detected_licenses,available_strategies)
+    
     detected_licenses
   end
   
@@ -149,6 +98,60 @@ class DerivingLicense
     end
     if licenses.has_key?("custom") and !licenses["custom"].empty?
       puts "The following dependencies have custom licenses: #{licenses["custom"].join(', ')}"
+    end
+  end
+  
+  def self.find_deps(path, content)
+    deps = []
+    if /gemspec/.match(path.downcase) # Gemspecs...
+      deps = Gemnasium::Parser::Gemspec.new(content).dependencies
+    else # Gemfiles...
+      content = Gemnasium::Parser::Gemfile.new(content)
+      gemspec_content = ""
+      begin
+        gemspec_content = File.open(content.gemspec, "r").read
+      rescue # If we fail to read the gemspec, search current directory
+        possible_gemspec_files = Find.find( File.dirname(content.gemspec) )
+        raise "Gemfile calls out to unnamed gemspec, but multiple gemspec files found in gemfile's directory. Tell the developer to name their sources!" unless possible_gemspec_files.count == 1
+        begin
+          gemspec_content = File.open(possible_gemspec_files[0], "r").read
+        rescue
+          raise "Could not open gemspec file \"#{possible_gemspec_files[0]}\" that was called by gemfile."
+        end
+      end if content.gemspec? # If the gemfile sources a gemspec.
+      deps = content.dependencies
+      deps += Gemnasium::Parser::Gemspec.new(gemspec_content).dependencies unless gemspec_content.empty?
+    end
+    deps
+  end
+  
+  def self.determine_licenses(deps,detected_licenses,available_strategies)
+    licenses = []
+    deps.each do |d|
+      print "Determining license for #{d.name}:\n"
+      # Try each license finding strategy...
+      available_strategies.each do |s|
+        print "\tTrying #{s} strategy..."
+        licenses = eval("#{s}(\"#{d.name}\")")
+        unless licenses.empty? # and break out of the search if successful
+          print "#{licenses.count == 1 and licenses[0] == "custom" ? "CUSTOM\n" : "SUCCESS\n"}"
+          break
+        end
+        print "FAILED\n"
+      end
+      add_to_detected_licenses(licenses,detected_licenses,d.name)
+    end
+    detected_licenses.delete("custom") if detected_licenses["custom"].empty?
+  end
+  
+  def self.add_to_detected_licenses(licenses,detected_licenses,dep_name)
+    licenses.each do |l| # add each detected license to the results
+      if l == "custom"
+        detected_licenses["custom"] << "#{dep_name}" # the 'custom' key is 
+          # special and holds an array of the deps with custom licenses.      
+      else
+        detected_licenses[l]+=1
+      end
     end
   end
   
