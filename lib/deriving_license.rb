@@ -42,7 +42,7 @@ class DerivingLicense
   
   @specs_cache = {} # Cache of gem specifications previously fetched.
 
-  def self.run(path=nil, strategies=nil)
+  def self.run(path=nil, strategies=[])
     unless path
       raise ArgumentError.new("Path to Gemfile or Gemspec required")
     end
@@ -57,12 +57,9 @@ class DerivingLicense
       raise "Invalid path to gemfile or gemspec."
     end
     
-    strategies.each do |s|
-      unless @strategies.include?(s)
-        raise "Supplied strategies must be from the following list: [#{@strategies.join(', ')}]"
-      end
-    end unless strategies.nil?
-    available_strategies = strategies.nil? ? @strategies : strategies
+    available_strategies = strategies.select{|s| @strategies.include?(s)}
+    raise "Supplied strategies must be from the following list: [#{@strategies.join(', ')}]" if available_strategies.count != strategies.count
+    available_strategies = @strategies if strategies.empty?
     
     gemspec_content = ""
     deps = []
